@@ -18,9 +18,8 @@ declare function utilities:node-insert-or-replace-child($document, $namespaces, 
       default return ()
   let $parent-node := xdmp:with-namespaces($namespaces, xdmp:unpath($base-xpath-str))
   let $child-node  := xdmp:with-namespaces($namespaces, xdmp:unpath($xpath-str))
-  return ($xpath-str, $xpath-str,
+  return
     if (fn:empty($parent-node)) then () (: empty parent, return () :)
     else if (fn:empty($child-node)) then xdmp:node-insert-child($parent-node, $child)
     else xdmp:node-replace($child-node, $child)
-  )
 };
