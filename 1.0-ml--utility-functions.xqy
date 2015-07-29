@@ -23,3 +23,19 @@ declare function utilities:node-insert-or-replace-child($document, $namespaces, 
     else if (fn:empty($child-node)) then xdmp:node-insert-child($parent-node, $child)
     else xdmp:node-replace($child-node, $child)
 };
+
+(: Find the first non-empty value and return it
+ : We do cast each value to a string find the first non-empty.
+ : I also tried this as a recursive function, and it had a few more expression calls
+ : and did not seem to make a difference in performance.
+ :
+ : Recursive version:
+ : declare function utilities:first-non-empty($values) {
+ :   if (fn:count($values) le 0) then ()
+ :   else if (fn:string-length(fn:string($values[1])) gt 0) then $values[1]
+ :   else local:first-non-empty-1($values[2 to fn:last()])
+ : };
+ :)
+declare function utilities:first-non-empty($values) {
+  $values[fn:string-length(fn:string(.)) gt 0][1]
+};
