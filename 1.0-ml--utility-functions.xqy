@@ -2,7 +2,8 @@ xquery version "1.0-ml";
 
 module namespace utilities = "https://github.com/prestonmcgowan/1.0-ml--utility-functions";
 
-import module namespace functx = "http://www.functx.com" at "/MarkLogic/functx/functx-1.0-nodoc-2007-01.xqy";
+import module namespace sec    = "http://marklogic.com/xdmp/security" at "/MarkLogic/security.xqy";
+import module namespace functx = "http://www.functx.com"              at "/MarkLogic/functx/functx-1.0-nodoc-2007-01.xqy";
 
 declare option xdmp:mapping "false";
 
@@ -60,4 +61,38 @@ declare function utilities:uuid() as xs:string {
         else functx:pad-string-to-length($v, '0', 16) 
     , ''
   )
+};
+
+(: Get Role Names
+ : Given a sequence of role id's, returns their human readable names.
+ : Utilized by utilities:document-get-readable-permissions()
+ :)
+declare private function utilities:get-role-names($role-ids) {
+  xdmp:invoke-function(
+    function() {
+      sec:get-role-names($role-ids)
+    },
+    <options xmlns="xdmp:eval">
+      <database>{xdmp:security-database()}</database>
+    </options>
+  )
+};
+
+(: Get Human Readable Document Permissions
+ : Given a document's uri, returns a map containing it's role names, mapped to their capabilities.
+ : Role names and capabilities are human readable.
+ :)
+declare function utilities:document-get-readable-permissions($uri as xs:string) as map:map {
+  let $perms := map:map()
+  let $_ :=
+    for $p in xdmp:document-get-permissions($uri)
+    let $capability := $p/sec:capability/text()
+    let $role-name  := utilities:get-role-names($p/sec:role-id/text())
+    return 
+      if (map:contains($perms, $role-name)) then
+        map:put($perms, $role-name, (map:get($perms, $role-name), $capability))
+      else
+        map:put($perms, $role-name, $capability)
+    
+  return $perms
 };
